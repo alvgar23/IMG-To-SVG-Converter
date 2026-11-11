@@ -1,86 +1,96 @@
-# Python SVG Half Tone Image Converter
+# IMG to SVG Converter — Halftone y modelos 3D
 
-**Original Author:** [DE Hammer](https://www.thingiverse.com/dehammer)
-**Original Thingiverse post:** [https://www.thingiverse.com/thing:5183381](https://www.thingiverse.com/thing:5183381)
-**Updated & documented by:** Avtomat Agentics (2025)
+Herramientas en Python para convertir imágenes **JPG/PNG** en ilustraciones vectoriales **SVG con efecto halftone** (una trama de puntos que reproduce luces y sombras). También incluye dos formas de transformar esos SVG en relieves **STL** para trabajar con modelos 3D.
 
----
+El conversor gráfico parte del trabajo original de **DE Hammer** ([publicación original en Thingiverse](https://www.thingiverse.com/thing:5183381)). El repositorio conserva las adaptaciones y herramientas posteriores atribuidas a **Avtomat Agentics (2025)**.
 
-## Summary
+## Qué incluye
 
-This Python tool converts **JPG** and **PNG** images into **vector halftone SVGs** — perfect for laser engraving, CNC, or 3D printing.
-The program builds a grid of circles whose sizes represent local brightness, creating a clean halftone pattern.
+| Archivo | Función |
+| --- | --- |
+| [`halftone_gui_converter.py`](halftone_gui_converter.py) | Conversor gráfico de JPG/PNG a SVG halftone. Sugiere parámetros según el análisis de la imagen. |
+| [`halftone_gui_art_converter.py`](halftone_gui_art_converter.py) | Variante gráfica que añade detección del estilo de imagen y perfiles para dibujar distintos patrones. |
+| [`create_halftone_folders.py`](create_halftone_folders.py) | Crea las carpetas auxiliares de trabajo. |
+| [`install_halftone_dependencies.py`](install_halftone_dependencies.py) | Instalador auxiliar de algunos paquetes; **no cubre todas las dependencias** de los programas. |
+| [`scad_converter.py`](scad_converter.py) | Convierte los SVG de la carpeta `SVG` en modelos `.scad` de OpenSCAD. |
+| [`scad_to_stl_randerer.py`](scad_to_stl_randerer.py) | Renderiza los modelos `.scad` en `.stl` utilizando OpenSCAD. El nombre del archivo conserva su errata original. |
+| [`svg_to_stl_converter.py`](svg_to_stl_converter.py) | Alternativa directa de SVG a STL mediante Trimesh, sin pasar por OpenSCAD. |
 
-Originally created by DE Hammer (2021), this version has been updated to work in any folder, include auto-parameter suggestions, and feature improved organization and stability.
+## Instalación
 
----
+Se recomienda Python 3.8 o posterior. La aplicación gráfica usa **Tkinter**, que debe estar disponible en la instalación de Python.
 
-## What's New in This Version
+Desde la carpeta del repositorio:
 
-* Works from **any directory** (no longer requires Desktop placement)
-* **Auto-suggests parameters** (stock size, detail, spacing, etc.) based on image brightness and contrast
-* Cleaner, more compact **Tkinter GUI** layout
-* Simplified path management using Python’s `pathlib`
-* Compatible with **Python ≥ 3.8**
-* More readable structure and added inline documentation
+```bash
+python -m pip install pillow pycairo svglib reportlab rlPyCairo opencv-python numpy trimesh
+```
 
----
+Estas son las bibliotecas externas identificadas en los scripts. La instalación puede variar según el sistema operativo y la versión de Python. El script `install_halftone_dependencies.py` instala o actualiza `pip`, `pycairo`, `svglib`, `reportlab` y `Pillow`, pero **no instala OpenCV, NumPy ni Trimesh**, por lo que no sustituye al comando anterior.
 
-## How It Works
+Para la ruta `SCAD → STL` hace falta además instalar **OpenSCAD**. El script tiene configurada la ruta de Windows `C:\Program Files\OpenSCAD\openscad.exe`; si se instala en otra ubicación, hay que ajustar `OPENSCAD_CMD` dentro de `scad_to_stl_randerer.py`.
 
-1. Import a JPG or PNG image.
-2. The program analyzes it and pre-fills suggested halftone parameters (you can edit them).
-3. Choose the color mode:
+## Uso básico: imagen a SVG
 
-   * **White circles on black background**
-   * **Black circles on white background**
-4. Click **Convert Image** to generate your halftone SVG.
-5. The resulting SVG and PNG previews are saved to the `SVG` folder.
+1. Ejecuta uno de los conversores gráficos:
+   ```bash
+   python halftone_gui_converter.py
+   ```
+   o bien:
+   ```bash
+   python halftone_gui_art_converter.py
+   ```
+2. Importa una imagen JPG o PNG.
+3. Revisa las sugerencias automáticas de tamaño, detalle y espaciado; puedes cambiarlas.
+4. Elige el modo de color. En la variante artística también puedes probar los estilos de trama.
+5. Pulsa **Convert Image**.
+6. El SVG resultante se guarda en `SVG/`. La aplicación genera además imágenes auxiliares y una vista previa en `IMAGE/`.
 
----
+Los conversores crean automáticamente las carpetas básicas `IMAGE`, `SAVE FOLDER`, `JSON` y `SVG` junto a los scripts. También puedes prepararlas con:
 
-## Requirements
+```bash
+python create_halftone_folders.py
+```
 
-* **Python 3.8+** (recommended)
-* Required libraries:
+**Nota sobre compatibilidad:** el botón que abre la carpeta SVG usa `os.startfile`, una función específica de Windows. El resto del programa no queda automáticamente garantizado en otros sistemas.
 
-  ```bash
-  pip install pillow svglib reportlab cairocffi
-  ```
+## Pasar el SVG a un modelo 3D
 
-  *(If ReportLab gives a render error, install rlPyCairo as well.)*
+Hay **dos rutas alternativas**, no dos pasos obligatorios:
 
----
+**Ruta A — con OpenSCAD**
 
-## Usage
+```bash
+python scad_converter.py
+python scad_to_stl_randerer.py
+```
 
-1. Run `halftone_gui_converter.py`
-2. Click **Import Image** and choose your file.
-3. Adjust the suggested parameters if needed:
+Lee `SVG/`, genera archivos en `SCAD/` y después renderiza STL en `STL/`.
 
-   * Stock Width / Height (mm)
-   * Border (mm)
-   * Detail (1–20, lower = larger circles)
-   * Spacing (0.1–0.9)
-4. Select color mode.
-5. Click **Convert Image**.
-6. Find your SVG in the `SVG` folder or open it directly with **Open SVG Folder**.
+**Ruta B — directa con Python**
 
----
+```bash
+python svg_to_stl_converter.py
+```
 
-## Example Output
+Lee `SVG/` y guarda los STL directamente en `STL_3D/` mediante Trimesh.
 
-| Input Image                        | Generated Halftone (SVG)         |
-| ---------------------------------- | -------------------------------- |
-| ![input](IMAGE/IMPORT%20IMAGE.png) | ![output](IMAGE/SVG%20IMAGE.png) |
+**Atención:** los conversores 3D cambian el nombre de los archivos procesados añadiendo `_converted` para no repetirlos. No ejecutes ambas rutas sobre los mismos SVG sin preparar copias: la primera ruta puede marcarlos como procesados y la segunda omitirlos.
 
----
+Para ver las carpetas, los detalles y las limitaciones, consulta la [guía de funcionamiento](docs/funcionamiento.md).
 
-## License
+## Estado y limitaciones
 
-This project is distributed under the
-**Creative Commons Attribution–ShareAlike 4.0 International (CC BY-SA 4.0)** license.
+- Se conserva el código original y su estructura; no se ha realizado una refactorización.
+- Los archivos `IMAGE/IMPORT IMAGE.png` y `IMAGE/SVG IMAGE.png` son salidas generadas por la aplicación, **no imágenes de ejemplo incluidas** en GitHub.
+- La conversión 3D está orientada a SVG con tramas de puntos; no es un conversor universal de cualquier SVG.
+- No se han ejecutado pruebas completas de conversión ni de impresión 3D.
+- Los resultados STL deben comprobarse en un visor o laminador antes de imprimir.
 
-Based on the original work by **DE Hammer**, modified and updated by **Avtomat Agentics**.
+## Créditos y licencia
 
-More info: [https://creativecommons.org/licenses/by-sa/4.0/](https://creativecommons.org/licenses/by-sa/4.0/)
+**Autor original:** [DE Hammer](https://www.thingiverse.com/dehammer) — [proyecto original](https://www.thingiverse.com/thing:5183381).
+
+**Adaptaciones, herramientas y documentación:** Avtomat Agentics (2025), según los créditos del repositorio.
+
+Licencia conservada: [Creative Commons Attribution–ShareAlike 4.0 International](LICENSE.txt) (CC BY-SA 4.0).
